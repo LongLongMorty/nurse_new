@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nursing.center.mapper.AiRecipeRecommendationMapper">
+
+    <!-- 基础字段映射 -->
+    <sql id="Base_Column_List">
+        id, session_id, user_id, user_name, user_query, ai_response, recommendation_content,
+        adoption_status, adopted_time, adopted_config_id, adopted_config_name, feedback_rating,
+        feedback_comment, create_time, update_time, deleted
+    </sql>
+
+    <!-- AI食谱推荐DTO结果映射 -->
+    <resultMap id="AiRecipeRecommendationDTOMap" type="com.nursing.center.dto.AiRecipeRecommendationDTO">
+        <id column="id" property="id"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_name" property="userName"/>
+        <result column="user_query" property="userQuery"/>
+        <result column="ai_response" property="aiResponse"/>
+        <result column="recommendation_content" property="recommendationContent"/>
+        <result column="adoption_status" property="adoptionStatus"/>
+        <result column="adopted_time" property="adoptedTime"/>
+        <result column="adopted_config_id" property="adoptedConfigId"/>
+        <result column="adopted_config_name" property="adoptedConfigName"/>
+        <result column="feedback_rating" property="feedbackRating"/>
+        <result column="feedback_comment" property="feedbackComment"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        
+        <!-- 关联被采纳的膳食配置信息 -->
+        <association property="adoptedConfig" javaType="com.nursing.center.dto.MealConfigDTO">
+            <id column="config_id" property="id"/>
+            <result column="config_name" property="mealName"/>
+            <result column="config_type" property="mealType"/>
+            <result column="config_description" property="description"/>
+            <result column="config_cost" property="estimatedCost"/>
+            <result column="config_status" property="status"/>
+        </association>
+    </resultMap>
+
+    <!-- 分页查询AI食谱推荐 -->
+    <select id="selectRecommendationPage" resultMap="AiRecipeRecommendationDTOMap">
+        SELECT 
+            arr.id,
+            arr.session_id,
+            arr.user_id,
+            arr.user_name,
+            arr.user_query,
+            arr.ai_response,
+            arr.recommendation_content,
+            arr.adoption_status,
+            arr.adopted_time,
+            arr.adopted_config_id,
+            arr.adopted_config_name,
+            arr.feedback_rating,
+            arr.feedback_comment,
+            arr.create_time,
+            arr.update_time,
+            
+            -- 关联被采纳的膳食配置信息
+            mc.id as config_id,
+            mc.meal_name as config_name,
+            mc.meal_type as config_type,
+            mc.description as config_description,
+            mc.estimated_cost as config_cost,
+            mc.status as config_status
+            
+        FROM ai_recipe_recommendation arr
+        LEFT JOIN meal_config mc ON arr.adopted_config_id = mc.id AND mc.deleted = 0
+        WHERE arr.deleted = 0
+        <if test="query.sessionId != null and query.sessionId != ''">
+            AND arr.session_id = #{query.sessionId}
+        </if>
+        <if test="query.userId != null">
+            AND arr.user_id = #{query.userId}
+        </if>
+        <if test="query.adoptionStatus != null and query.adoptionStatus != ''">
+            AND arr.adoption_status = #{query.adoptionStatus}
+        </if>        <if test="query.startDate != null">
+            AND DATE(arr.create_time) &gt;= #{query.startDate}
+        </if>
+        <if test="query.endDate != null">
+            AND DATE(arr.create_time) &lt;= #{query.endDate}
+        </if>
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (arr.user_query LIKE CONCAT('%', #{query.keyword}, '%') 
+                 OR arr.ai_response LIKE CONCAT('%', #{query.keyword}, '%')
+                 OR arr.recommendation_content LIKE CONCAT('%', #{query.keyword}, '%'))
+        </if>
+        ORDER BY arr.create_time DESC, arr.id DESC
+    </select>
+
+    <!-- 根据ID查询AI食谱推荐详情 -->
+    <select id="selectRecommendationById" resultMap="AiRecipeRecommendationDTOMap">
+        SELECT 
+            arr.id,
+            arr.session_id,
+            arr.user_id,
+            arr.user_name,
+            arr.user_query,
+            arr.ai_response,
+            arr.recommendation_content,
+            arr.adoption_status,
+            arr.adopted_time,
+            arr.adopted_config_id,
+            arr.adopted_config_name,
+            arr.feedback_rating,
+            arr.feedback_comment,
+            arr.create_time,
+            arr.update_time,
+            
+            -- 关联被采纳的膳食配置信息
+            mc.id as config_id,
+            mc.meal_name as config_name,
+            mc.meal_type as config_type,
+            mc.description as config_description,
+            mc.estimated_cost as config_cost,
+            mc.status as config_status
+            
+        FROM ai_recipe_recommendation arr
+        LEFT JOIN meal_config mc ON arr.adopted_config_id = mc.id AND mc.deleted = 0
+        WHERE arr.id = #{id} AND arr.deleted = 0
+    </select>
+
+    <!-- 根据用户ID查询AI食谱推荐 -->
+    <select id="selectByUserId" resultMap="AiRecipeRecommendationDTOMap">
+        SELECT 
+            arr.id,
+            arr.session_id,
+            arr.user_id,
+            arr.user_name,
+            arr.user_query,
+            arr.ai_response,
+            arr.recommendation_content,
+            arr.adoption_status,
+            arr.adopted_time,
+            arr.adopted_config_id,
+            arr.adopted_config_name,
+            arr.feedback_rating,
+            arr.feedback_comment,
+            arr.create_time,
+            arr.update_time,
+            
+            -- 关联被采纳的膳食配置信息
+            mc.id as config_id,
+            mc.meal_name as config_name,
+            mc.meal_type as config_type,
+            mc.description as config_description,
+            mc.estimated_cost as config_cost,
+            mc.status as config_status
+            
+        FROM ai_recipe_recommendation arr
+        LEFT JOIN meal_config mc ON arr.adopted_config_id = mc.id AND mc.deleted = 0
+        WHERE arr.user_id = #{userId} AND arr.deleted = 0
+        ORDER BY arr.create_time DESC, arr.id DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据会话ID查询AI食谱推荐 -->
+    <select id="selectBySessionId" resultMap="AiRecipeRecommendationDTOMap">
+        SELECT 
+            arr.id,
+            arr.session_id,
+            arr.user_id,
+            arr.user_name,
+            arr.user_query,
+            arr.ai_response,
+            arr.recommendation_content,
+            arr.adoption_status,
+            arr.adopted_time,
+            arr.adopted_config_id,
+            arr.adopted_config_name,
+            arr.feedback_rating,
+            arr.feedback_comment,
+            arr.create_time,
+            arr.update_time,
+            
+            -- 关联被采纳的膳食配置信息
+            mc.id as config_id,
+            mc.meal_name as config_name,
+            mc.meal_type as config_type,
+            mc.description as config_description,
+            mc.estimated_cost as config_cost,
+            mc.status as config_status
+            
+        FROM ai_recipe_recommendation arr
+        LEFT JOIN meal_config mc ON arr.adopted_config_id = mc.id AND mc.deleted = 0
+        WHERE arr.session_id = #{sessionId} AND arr.deleted = 0
+        ORDER BY arr.create_time ASC, arr.id ASC
+    </select>
+
+    <!-- 统计推荐采纳情况 -->
+    <select id="countByAdoptionStatus" resultType="java.util.Map">
+        SELECT 
+            adoption_status,
+            COUNT(1) as count
+        FROM ai_recipe_recommendation        WHERE deleted = 0
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
+        <if test="startDate != null">
+            AND DATE(create_time) &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND DATE(create_time) &lt;= #{endDate}
+        </if>
+        GROUP BY adoption_status
+    </select>
+
+    <!-- 统计用户推荐使用情况 -->
+    <select id="getUserRecommendationStats" resultType="java.util.Map">
+        SELECT 
+            user_id,
+            user_name,
+            COUNT(1) as total_count,
+            SUM(CASE WHEN adoption_status = 'ADOPTED' THEN 1 ELSE 0 END) as adopted_count,
+            AVG(CASE WHEN feedback_rating IS NOT NULL THEN feedback_rating ELSE NULL END) as avg_rating        FROM ai_recipe_recommendation
+        WHERE deleted = 0
+        <if test="startDate != null">
+            AND DATE(create_time) &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND DATE(create_time) &lt;= #{endDate}
+        </if>
+        GROUP BY user_id, user_name
+        ORDER BY total_count DESC
+    </select>
+
+    <!-- 批量删除AI食谱推荐 -->
+    <update id="batchDeleteByIds">
+        UPDATE ai_recipe_recommendation SET deleted = 1, update_time = NOW()
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 批量更新采纳状态 -->
+    <update id="batchUpdateAdoptionStatus">
+        UPDATE ai_recipe_recommendation 
+        SET 
+            adoption_status = #{status},
+            <if test="status == 'ADOPTED'">
+                adopted_time = NOW(),
+                adopted_config_id = #{configId},
+                adopted_config_name = #{configName},
+            </if>
+            update_time = NOW()
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 更新推荐反馈 -->
+    <update id="updateFeedback">
+        UPDATE ai_recipe_recommendation 
+        SET 
+            feedback_rating = #{rating},
+            feedback_comment = #{comment},
+            update_time = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 清理过期的AI推荐记录 -->    <update id="cleanExpiredRecommendations">
+        UPDATE ai_recipe_recommendation 
+        SET deleted = 1, update_time = NOW()
+        WHERE create_time &lt;= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        AND adoption_status = 'PENDING'
+        AND deleted = 0
+    </update>
+
+</mapper>
