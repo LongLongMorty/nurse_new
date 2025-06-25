@@ -6,7 +6,7 @@
 ``` bash
     cd nursing-center-system/nursing-center-frontend
 
-安装依赖：
+##### 安装依赖：
 ``` bash
 npm install
 
