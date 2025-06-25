@@ -1,12 +1,11 @@
 ####  可以下载了
 #### 前端部分
 
-    确保你已经安装了 Node.js 和 npm。
-    进入前端项目目录：
+确保你已经安装了 Node.js 和 npm。
+进入前端项目目录：
+``` bash
     cd nursing-center-system/nursing-center-frontend
-    安装依赖：
-
-
+安装依赖：
 npm install
 
 启动开发服务器：
